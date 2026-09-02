@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Play, Volume2, Star, Smile, ChevronRight, Lock } from 'lucide-react';
+import { Sparkles, Play, Star, Smile, Lock } from 'lucide-react';
 import { GameInfo, BabyProfile } from '../types';
 import { AVAILABLE_GAMES, AVATAR_OPTIONS } from '../data/gameData';
 import { soundManager } from '../utils/audio';
@@ -19,7 +19,6 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
   const [babyName, setBabyName] = useState(currentProfile.name || 'Bé Nhật Minh');
   const [selectedAvatar, setSelectedAvatar] = useState(currentProfile.avatarEmoji || '👶');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [selectedGameId, setSelectedGameId] = useState<string>('bubble_pop');
 
   const handleStartGame = (game: GameInfo) => {
     if (!game.isAvailable) {
@@ -46,8 +45,6 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
     soundManager.playPop(1.2);
     soundManager.speakVietnamese(`Chọn bạn ${label}!`);
   };
-
-  const currentGame = AVAILABLE_GAMES.find((g) => g.id === selectedGameId) || AVAILABLE_GAMES[0];
 
   return (
     <div
@@ -181,45 +178,46 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
         </section>
 
         {/* Right Area: Game Cards Selection (7 cols on lg) */}
-        <section className="lg:col-span-7 flex flex-col justify-between gap-3">
+        <section className="lg:col-span-7 flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-sm md:text-base font-extrabold text-slate-800 flex items-center gap-1.5">
               <Play className="w-4 h-4 text-amber-600 fill-current" />
-              DANH SÁCH TRÒ CHƠI
+              CHỌN TRÒ CHƠI ĐỂ CHƠI NGAY
             </h2>
             <span className="text-xs font-bold text-slate-500">
-              {AVAILABLE_GAMES.filter((g) => g.isAvailable).length} Trò chơi sẵn sàng
+              {AVAILABLE_GAMES.filter((g) => g.isAvailable).length} Trò chơi
             </span>
           </div>
 
-          {/* List of Game Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
-            {AVAILABLE_GAMES.map((game) => {
-              const isSelected = selectedGameId === game.id;
-              return (
+          {/* List of Game Cards - Click to Play Immediately */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[480px] overflow-y-auto pr-1">
+            {AVAILABLE_GAMES.map((game) => (
+              <button
+                key={game.id}
+                id={`game-card-${game.id}`}
+                onClick={() => handleStartGame(game)}
+                className={`w-full relative rounded-3xl p-4 transition-all select-none border-3 flex items-center gap-3.5 text-left group active:scale-95 ${
+                  game.isAvailable
+                    ? 'bg-white hover:bg-amber-50/80 border-amber-300 hover:border-amber-400 shadow-md hover:shadow-xl hover:scale-[1.02] cursor-pointer'
+                    : 'bg-slate-50/80 border-dashed border-slate-300 opacity-70 cursor-not-allowed'
+                }`}
+              >
+                {/* Big Game Icon */}
                 <div
-                  key={game.id}
-                  id={`game-card-${game.id}`}
-                  onClick={() => {
-                    setSelectedGameId(game.id);
-                    if (game.isAvailable) {
-                      soundManager.playPop(1.1);
-                    } else {
-                      soundManager.playSpecialSound('magic');
-                    }
-                  }}
-                  className={`relative rounded-3xl p-4 transition-all cursor-pointer select-none border-3 flex flex-col justify-between ${
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-inner shrink-0 transition-transform group-hover:scale-110 ${
                     game.isAvailable
-                      ? isSelected
-                        ? 'bg-white border-amber-400 shadow-xl scale-[1.02] ring-4 ring-amber-300/50'
-                        : 'bg-white/90 border-slate-200 hover:border-amber-300 shadow-md hover:shadow-lg'
-                      : 'bg-slate-50/80 border-dashed border-slate-300 opacity-75'
+                      ? 'bg-linear-to-br from-amber-100 to-yellow-200 border-2 border-amber-200'
+                      : 'bg-slate-200'
                   }`}
                 >
-                  {/* Top Badge */}
-                  <div className="flex items-center justify-between mb-2">
+                  {game.iconEmoji}
+                </div>
+
+                {/* Only Game Title */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <span
-                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                      className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                         game.isAvailable
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-slate-200 text-slate-600'
@@ -229,57 +227,20 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
                     </span>
                     {!game.isAvailable && <Lock className="w-3.5 h-3.5 text-slate-400" />}
                   </div>
-
-                  {/* Icon & Title */}
-                  <div className="flex items-center gap-3 my-1">
-                    <div
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner shrink-0 ${
-                        game.isAvailable ? 'bg-amber-100' : 'bg-slate-200'
-                      }`}
-                    >
-                      {game.iconEmoji}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-800 leading-snug">
-                        {game.titleVi}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 font-semibold line-clamp-2 mt-0.5">
-                        {game.descriptionVi}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Hint */}
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    {game.isAvailable ? (
-                      <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                        Chạm để chọn <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold text-slate-400 italic">
-                        {game.comingSoonText}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="text-base md:text-lg font-black text-slate-800 leading-snug group-hover:text-amber-600 transition-colors">
+                    {game.titleVi}
+                  </h3>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Big Play Button */}
-          <button
-            id="start-selected-game-btn"
-            onClick={() => handleStartGame(currentGame)}
-            className={`w-full py-4 px-6 rounded-3xl font-black text-lg md:text-xl text-white shadow-2xl flex items-center justify-center gap-3 transform active:scale-95 transition-all select-none ${
-              currentGame.isAvailable
-                ? 'bg-linear-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 ring-4 ring-amber-300'
-                : 'bg-slate-400 cursor-not-allowed'
-            }`}
-          >
-            <Play className="w-6 h-6 fill-current animate-pulse" />
-            <span>VÀO CHƠI NGAY ({currentGame.titleVi})</span>
-            <Sparkles className="w-6 h-6" />
-          </button>
+                {/* Play Arrow Icon */}
+                {game.isAvailable && (
+                  <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:bg-amber-600 group-hover:scale-110 transition-all">
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         </section>
       </div>
 
