@@ -21,6 +21,7 @@ interface SparkleParticle {
 export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) => {
   const [tapCount, setTapCount] = useState(0);
   const [particles, setParticles] = useState<SparkleParticle[]>([]);
+  const lastTapRef = React.useRef<number>(0);
 
   useEffect(() => {
     if (item) {
@@ -38,10 +39,15 @@ export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) =
 
   const handleAnimalTap = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    const now = Date.now();
+    if (now - lastTapRef.current < 250) {
+      return;
+    }
+    lastTapRef.current = now;
     setTapCount((prev) => prev + 1);
 
     // Play sound immediately
-    soundManager.playSpecialSound(item.soundType);
+    soundManager.playSpecialSound(item.soundType, item.id);
     soundManager.speakVietnamese(item.nameVi);
 
     // Spawn 5 fun celebration particles around animal

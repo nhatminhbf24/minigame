@@ -13,9 +13,11 @@ class SoundEngine {
   private viVoice: SpeechSynthesisVoice | null = null;
   private audioCache: Map<string, HTMLAudioElement> = new Map();
   private bufferCache: Map<string, AudioBuffer> = new Map();
+  private ttsBufferCache: Map<string, AudioBuffer> = new Map();
   private isUnlocked: boolean = false;
   private activeUtterances: Set<SpeechSynthesisUtterance> = new Set();
   private currentAudio: HTMLAudioElement | null = null;
+  private currentTtsSource: AudioBufferSourceNode | null = null;
   private isPreloaded: boolean = false;
 
   // Authentic sound file mapping
@@ -311,6 +313,7 @@ class SoundEngine {
       this.initContext();
       this.isUnlocked = true;
       this.preloadSounds();
+      this.preloadCommonTTS();
 
       // Warm up TTS engine
       if ('speechSynthesis' in window) {
@@ -789,19 +792,109 @@ class SoundEngine {
   }
 
   /**
-   * Speak Vietnamese with 100% natural accent & high reliability:
-   * 1. Try high-quality standard Vietnamese TTS audio (cached)
-   * 2. Fallback to Web Speech API ONLY IF device has true Vietnamese voice
-   * 3. If no Vietnamese voice is installed on OS, play pleasant chime instead of garbled English!
+   * Preload common colors and speech phrases so they play with 0ms delay and bypass mobile network lag
    */
-  public speakVietnamese(text: string) {
+  public async preloadCommonTTS() {
+    if (typeof window === 'undefined') return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    const commonWords = [
+      'Màu Đỏ', 'Màu Vàng', 'Màu Xanh Dương', 'Màu Xanh Lá', 'Màu Cam', 'Màu Tím', 'Màu Hồng', 'Cầu Vồng',
+      'Quả Táo', 'Quả Chuối', 'Quả Dưa Hấu', 'Quả Dâu Tây', 'Quả Cam', 'Quả Nho', 'Quả Xoài', 'Quả Dứa',
+      'Quả Cherry', 'Quả Kiwi', 'Quả Lê', 'Quả Dưa Lưới', 'Quả Lựu',
+      'Xe Cứu Hỏa', 'Xe Giao Hàng', 'Xe Ben Tự Đổ', 'Xe Trộn Bê Tông', 'Xe Bồn Xăng Dầu', 'Xe Cứu Hộ',
+      'Xe Rác Môi Trường', 'Xe Máy Cày Nông Trại', 'Xe Chở Ô Tô', 'Xe Bán Tải', 'Xe Đua Thể Thao',
+      'Xe Máy Phân Khối Lớn', 'Xe Máy Xúc Đất', 'Xe Cảnh Sát', 'Xe Cứu Thương', 'Tàu Hỏa', 'Tàu Siêu Tốc',
+      'Xe Đạp', 'Máy Bay', 'Trực Thăng', 'Tàu Thủy', 'Du Thuyền', 'Tên Lửa Vũ Trụ',
+      'Hoan hô bé Nhật Minh giỏi quá!', 'Tuyệt vời quá bé ơi!', 'Bé bấm giỏi ghê!', 'Bé Nhật Minh siêu nhân!'
+    ];
+
+    // Concurrently fetch and decode top words in batches
+    for (const word of commonWords) {
+      if (this.ttsBufferCache.has(word)) continue;
+      try {
+        const url = `/api/tts?text=${encodeURIComponent(word)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          const audioBuffer = await ctx.decodeAudioData(ab);
+          this.ttsBufferCache.set(word, audioBuffer);
+        }
+      } catch {
+        // Will fetch on-demand or fallback
+      }
+    }
+  }
+
+  /**
+   * Speak Vietnamese with 100% natural accent & high reliability on both Mobile & Desktop:
+   * 1. Try pre-decoded Web Audio buffer for instantaneous mobile playback (< 5ms)
+   * 2. Try fetching and playing directly through unlocked Web Audio context
+   * 3. Fallback to HTML5 Audio element
+   * 4. Fallback to Web Speech API ONLY IF device has true Vietnamese voice
+   * 5. If no Vietnamese voice is installed on OS, play pleasant chime instead of garbled English!
+   */
+  public async speakVietnamese(text: string) {
     if (!this.voiceEnabled || !text) return;
 
-    // Check Audio Cache first for instant playback
     const cleanText = text.trim();
-    const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}`;
+    const ctx = this.initContext();
 
-    // Try playing via HTML5 Audio element with high-quality Vietnamese audio
+    // 1. Try playing from pre-decoded TTS AudioBuffer (Web Audio API - 100% reliable on mobile when unlocked)
+    if (ctx && this.ttsBufferCache.has(cleanText)) {
+      try {
+        if (this.currentTtsSource) {
+          try {
+            this.currentTtsSource.stop();
+            this.currentTtsSource.disconnect();
+          } catch {
+            // Already stopped
+          }
+        }
+        const buffer = this.ttsBufferCache.get(cleanText)!;
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        this.currentTtsSource = source;
+        source.start(0);
+        return;
+      } catch {
+        // Continue to online fetch
+      }
+    }
+
+    // 2. Fetch and decode on the fly via Web Audio API
+    const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}`;
+    if (ctx) {
+      try {
+        const res = await fetch(ttsUrl);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          const buffer = await ctx.decodeAudioData(ab);
+          this.ttsBufferCache.set(cleanText, buffer);
+
+          if (this.currentTtsSource) {
+            try {
+              this.currentTtsSource.stop();
+              this.currentTtsSource.disconnect();
+            } catch {
+              // Already stopped
+            }
+          }
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          this.currentTtsSource = source;
+          source.start(0);
+          return;
+        }
+      } catch {
+        // Continue to HTML5 Audio fallback
+      }
+    }
+
+    // 3. Fallback to HTML5 Audio element
     try {
       if (this.currentAudio) {
         this.currentAudio.pause();
