@@ -57,9 +57,25 @@ export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) =
     setParticles((prev) => [...prev.slice(-10), ...newParticles]);
   };
 
-  // Determine personality idle animation for different animal types
-  const getAnimalIdleAnimation = (id: string) => {
-    if (['rabbit', 'bunny', 'frog', 'squirrel'].includes(id)) {
+  // Determine personality idle animation for different categories & items
+  const getIdleAnimation = (currentItem: SurpriseItem) => {
+    if (currentItem.category === 'fruit') {
+      return {
+        y: [0, -10, 0, -4, 0],
+        rotate: [-3, 3, -2, 2, 0],
+        scale: [1, 1.05, 1, 1.03, 1],
+        transition: { duration: 2.0, repeat: Infinity, ease: 'easeInOut' as const },
+      };
+    }
+    if (currentItem.category === 'vehicle') {
+      return {
+        x: [-5, 5, -5],
+        y: [0, -4, 0],
+        rotate: [-1, 1, -1],
+        transition: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' as const },
+      };
+    }
+    if (['rabbit', 'bunny', 'frog', 'squirrel'].includes(currentItem.id)) {
       // Springy Hop animation
       return {
         y: [0, -16, 0, -8, 0],
@@ -68,7 +84,7 @@ export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) =
         transition: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' as const },
       };
     }
-    if (['penguin', 'duck'].includes(id)) {
+    if (['penguin', 'duck'].includes(currentItem.id)) {
       // Cute Waddle animation
       return {
         rotate: [-7, 7, -7],
@@ -76,7 +92,7 @@ export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) =
         transition: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' as const },
       };
     }
-    if (['dog', 'puppy', 'cat', 'kitten', 'fox', 'monkey'].includes(id)) {
+    if (['dog', 'puppy', 'cat', 'kitten', 'fox', 'monkey'].includes(currentItem.id)) {
       // Playful Head Tilt & Breathing
       return {
         rotate: [0, -4, 4, -2, 0],
@@ -94,7 +110,7 @@ export const SurpriseCard: React.FC<SurpriseCardProps> = ({ item, onDismiss }) =
     };
   };
 
-  const idleMotion = getAnimalIdleAnimation(item.id);
+  const idleMotion = getIdleAnimation(item);
 
   return (
     <div

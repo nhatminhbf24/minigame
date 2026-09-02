@@ -63,6 +63,14 @@ class SoundEngine {
     bus: '/sounds/car_horn.ogg',
     truck: '/sounds/car_horn.ogg',
     delivery_truck: '/sounds/car_horn.ogg',
+    dump_truck: '/sounds/car_horn.ogg',
+    concrete_mixer: '/sounds/car_horn.ogg',
+    tanker_truck: '/sounds/car_horn.ogg',
+    tow_truck: '/sounds/car_horn.ogg',
+    garbage_truck: '/sounds/car_horn.ogg',
+    tractor: '/sounds/car_horn.ogg',
+    car_carrier: '/sounds/car_horn.ogg',
+    pickup_truck: '/sounds/car_horn.ogg',
     race_car: '/sounds/car_horn.ogg',
     motorcycle: '/sounds/car_horn.ogg',
     excavator: '/sounds/car_horn.ogg',
@@ -78,6 +86,217 @@ class SoundEngine {
     boat: '/sounds/ship_bell.ogg',
     rocket: '/sounds/clown_horn.ogg',
   };
+
+  /**
+   * Barn Door gentle rattle / rustle sound
+   */
+  public playBarnRattle() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      for (let i = 0; i < 4; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = now + i * 0.08;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(90 + Math.random() * 40, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.05);
+
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.05);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Mystery whisper / gentle teaser sound before door opens
+   */
+  public playMysteryChime() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const notes = [392, 523.25, 659.25]; // G4, C5, E5
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = now + idx * 0.12;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.4);
+      });
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Sound effect for realistic wooden barn door creak opening
+   */
+  public playDoorCreak() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Slow organic creak using frequency modulation
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(320, now);
+      filter.Q.setValueAtTime(4.0, now);
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(380, now + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(210, now + 0.38);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.55);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.28, now + 0.08);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.6);
+
+      // Light haptic vibration
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([20, 30, 20]);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Knocking sound on wooden barn door "Cốc cốc cốc"
+   */
+  public playKnock() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      [0, 0.12, 0.24].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(60, now + offset + 0.06);
+
+        gain.gain.setValueAtTime(0.5, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.06);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.06);
+      });
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([15, 40, 15, 40, 15]);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Wooden door latch / soft close sound
+   */
+  public playDoorClose() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(130, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.09);
+
+      gain.gain.setValueAtTime(0.45, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Peekaboo celebration cheer chime
+   */
+  public playPeekabooCheer() {
+    if (!this.soundEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = now + idx * 0.06;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch {
+      // Fallback
+    }
+  }
 
   constructor() {
     this.initVoices();
@@ -514,6 +733,22 @@ class SoundEngine {
           gain.connect(ctx.destination);
           osc.start(now + offset);
           osc.stop(now + offset + 0.09);
+        });
+      } else if (type === 'fruit_crunch' || type === 'fruit' || type === 'munch') {
+        // Juicy crisp crunch & sweet pleasant chime
+        [0, 0.08].forEach((offset, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          const baseFreq = idx === 0 ? 587.33 : 880; // D5, A5
+          osc.frequency.setValueAtTime(baseFreq, now + offset);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + offset + 0.12);
+          gain.gain.setValueAtTime(0.35, now + offset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.14);
         });
       } else {
         this.playSparkle();

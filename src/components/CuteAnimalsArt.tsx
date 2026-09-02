@@ -1188,6 +1188,34 @@ export const CuteDolphinArt: React.FC<IconProps> = ({ size = 130, className = ''
   </svg>
 );
 
+export const CuteDuckArt: React.FC<IconProps> = ({ size = 130, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <defs>
+      <linearGradient id="duck-body" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FEF08A" />
+        <stop offset="60%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#EAB308" />
+      </linearGradient>
+    </defs>
+    {/* Water Waves */}
+    <path d="M24 136C40 130 56 142 72 136C88 130 104 142 120 136C136 130 152 142 160 136" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+    <ellipse cx="80" cy="112" rx="36" ry="26" fill="url(#duck-body)" />
+    {/* Little Duck Tail */}
+    <path d="M112 104C128 98 136 86 130 82C124 78 116 92 110 98" fill="#FACC15" />
+    {/* Wing */}
+    <ellipse cx="78" cy="112" rx="18" ry="12" fill="#FACC15" transform="rotate(-10 78 112)" />
+    {/* Head */}
+    <circle cx="68" cy="62" r="28" fill="url(#duck-body)" />
+    {/* Big Shiny Eye */}
+    <circle cx="60" cy="56" r="6" fill="#1E293B" />
+    <circle cx="62" cy="54" r="2.5" fill="#FFFFFF" />
+    {/* Orange Duck Beak */}
+    <path d="M44 64C30 64 24 70 30 76C36 80 48 76 52 72Z" fill="#F97316" />
+    {/* Rosy Cheek */}
+    <circle cx="70" cy="70" r="5" fill="#FB7185" opacity="0.65" />
+  </svg>
+);
+
 export const CuteWhaleArt: React.FC<IconProps> = ({ size = 130, className = '' }) => (
   <svg width={size} height={size} viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <path d="M70 42C70 24 54 26 50 32" stroke="#38BDF8" strokeWidth="4" strokeLinecap="round" fill="none" />

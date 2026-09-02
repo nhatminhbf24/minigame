@@ -168,19 +168,16 @@ export const Train3D: React.FC<IconProps> = ({ size = 120, className = '' }) => 
   </svg>
 );
 
-export const AnimalWithPngFallback: React.FC<{
-  id: string;
+export const AssetWithFallback: React.FC<{
+  src: string;
+  alt: string;
   size?: number;
-  fallbackSvg: React.ReactNode;
-}> = ({ id, size = 130, fallbackSvg }) => {
+  fallback?: React.ReactNode;
+}> = ({ src, alt, size = 130, fallback }) => {
   const [hasError, setHasError] = React.useState(false);
 
-  // Normalization for aliases
-  const fileKey = id === 'puppy' ? 'dog' : id === 'kitten' ? 'cat' : id === 'bunny' ? 'rabbit' : id;
-  const pngSrc = `/animals/${fileKey}.png`;
-
-  if (hasError) {
-    return <>{fallbackSvg}</>;
+  if (hasError && fallback) {
+    return <>{fallback}</>;
   }
 
   return (
@@ -189,8 +186,8 @@ export const AnimalWithPngFallback: React.FC<{
       className="relative flex items-center justify-center select-none"
     >
       <img
-        src={pngSrc}
-        alt={id}
+        src={src}
+        alt={alt}
         referrerPolicy="no-referrer"
         onError={() => setHasError(true)}
         className="max-w-full max-h-full object-contain filter drop-shadow-md transition-transform duration-200"
@@ -200,9 +197,53 @@ export const AnimalWithPngFallback: React.FC<{
   );
 };
 
+export const AnimalWithPngFallback: React.FC<{
+  id: string;
+  size?: number;
+  fallbackSvg: React.ReactNode;
+}> = ({ id, size = 130, fallbackSvg }) => {
+  const fileKey = id === 'puppy' ? 'dog' : id === 'kitten' ? 'cat' : id === 'bunny' ? 'rabbit' : id;
+  return (
+    <AssetWithFallback
+      src={`/animals/${fileKey}.png`}
+      alt={id}
+      size={size}
+      fallback={fallbackSvg}
+    />
+  );
+};
+
 // Helper function to render 100% ACCURATE 3D / Chibi component by item id
 export const renderSurprise3D = (id: string, size = 130) => {
   switch (id) {
+    // ---------------- 13 FRUITS GALLERY (PNG from user) ----------------
+    case 'apple':
+      return <AssetWithFallback src="/fruits/apple.png" alt="Quả Táo" size={size} fallback={<span className="text-8xl">🍎</span>} />;
+    case 'banana':
+      return <AssetWithFallback src="/fruits/banana.png" alt="Quả Chuối" size={size} fallback={<span className="text-8xl">🍌</span>} />;
+    case 'watermelon':
+      return <AssetWithFallback src="/fruits/watermelon.png" alt="Quả Dưa Hấu" size={size} fallback={<span className="text-8xl">🍉</span>} />;
+    case 'strawberry':
+      return <AssetWithFallback src="/fruits/strawberry.png" alt="Quả Dâu Tây" size={size} fallback={<span className="text-8xl">🍓</span>} />;
+    case 'orange':
+      return <AssetWithFallback src="/fruits/orange.png" alt="Quả Cam" size={size} fallback={<span className="text-8xl">🍊</span>} />;
+    case 'grapes':
+      return <AssetWithFallback src="/fruits/grapes.png" alt="Quả Nho" size={size} fallback={<span className="text-8xl">🍇</span>} />;
+    case 'mango':
+      return <AssetWithFallback src="/fruits/mango.png" alt="Quả Xoài" size={size} fallback={<span className="text-8xl">🥭</span>} />;
+    case 'pineapple':
+      return <AssetWithFallback src="/fruits/pineapple.png" alt="Quả Dứa" size={size} fallback={<span className="text-8xl">🍍</span>} />;
+    case 'cherry':
+      return <AssetWithFallback src="/fruits/cherry.png" alt="Quả Cherry" size={size} fallback={<span className="text-8xl">🍒</span>} />;
+    case 'kiwi':
+      return <AssetWithFallback src="/fruits/kiwi.png" alt="Quả Kiwi" size={size} fallback={<span className="text-8xl">🥝</span>} />;
+    case 'pear':
+      return <AssetWithFallback src="/fruits/pear.png" alt="Quả Lê" size={size} fallback={<span className="text-8xl">🍐</span>} />;
+    case 'melon':
+      return <AssetWithFallback src="/fruits/melon.png" alt="Quả Dưa Lưới" size={size} fallback={<span className="text-8xl">🍈</span>} />;
+    case 'pomegranate':
+      return <AssetWithFallback src="/fruits/pomegranate.png" alt="Quả Lựu" size={size} fallback={<span className="text-8xl">🫐</span>} />;
+
     // ---------------- 20 ANIMALS Y CHANG TRANH (Supports PNG + Vector Fallback) ----------------
     case 'lion':
       return <AnimalWithPngFallback id="lion" size={size} fallbackSvg={<CuteLionArt size={size} />} />;
@@ -270,9 +311,27 @@ export const renderSurprise3D = (id: string, size = 130) => {
     case 'dino':
       return <Dino3D size={size} />;
 
-    // ---------------- VEHICLES ----------------
+    // ---------------- VEHICLES (With PNG Gallery from user) ----------------
     case 'firetruck':
-      return <CuteFiretruckArt size={size} />;
+      return <AssetWithFallback src="/vehicles/firetruck.png" alt="Xe Cứu Hỏa" size={size} fallback={<CuteFiretruckArt size={size} />} />;
+    case 'delivery_truck':
+      return <AssetWithFallback src="/vehicles/delivery_truck.png" alt="Xe Giao Hàng" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'dump_truck':
+      return <AssetWithFallback src="/vehicles/dump_truck.png" alt="Xe Ben Tự Đổ" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'concrete_mixer':
+      return <AssetWithFallback src="/vehicles/concrete_mixer.png" alt="Xe Trộn Bê Tông" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'tanker_truck':
+      return <AssetWithFallback src="/vehicles/tanker_truck.png" alt="Xe Bồn Xăng Dầu" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'tow_truck':
+      return <AssetWithFallback src="/vehicles/tow_truck.png" alt="Xe Cứu Hộ" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'garbage_truck':
+      return <AssetWithFallback src="/vehicles/garbage_truck.png" alt="Xe Chở Rác" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'tractor':
+      return <AssetWithFallback src="/vehicles/tractor.png" alt="Xe Máy Cày" size={size} fallback={<Excavator3D size={size} />} />;
+    case 'car_carrier':
+      return <AssetWithFallback src="/vehicles/car_carrier.png" alt="Xe Chở Ô Tô" size={size} fallback={<CuteTruckArt size={size} />} />;
+    case 'pickup_truck':
+      return <AssetWithFallback src="/vehicles/pickup_truck.png" alt="Xe Bán Tải" size={size} fallback={<RedCar3D size={size} />} />;
     case 'ambulance':
       return <CuteAmbulanceArt size={size} />;
     case 'police':
@@ -284,7 +343,6 @@ export const renderSurprise3D = (id: string, size = 130) => {
     case 'bus':
       return <CuteBusArt size={size} />;
     case 'truck':
-    case 'delivery_truck':
       return <CuteTruckArt size={size} />;
     case 'race_car':
       return <CuteRaceCarArt size={size} />;

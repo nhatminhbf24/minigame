@@ -4,11 +4,22 @@ import { COLORS, SURPRISE_ITEMS, CHEER_PHRASES } from '../data/gameData';
 import { soundManager } from '../utils/audio';
 
 // Preloaded PNG images cache for 60fps canvas rendering
-const animalImagesCache: Record<string, HTMLImageElement> = {};
+const assetImagesCache: Record<string, HTMLImageElement> = {};
+
 const ANIMAL_FILE_KEYS = [
   'bear', 'cat', 'cow', 'deer', 'dog', 'elephant', 'fox', 'frog',
   'giraffe', 'goat', 'horse', 'lion', 'monkey', 'panda', 'penguin',
   'rabbit', 'sheep', 'squirrel', 'tiger', 'zebra'
+];
+
+const FRUIT_FILE_KEYS = [
+  'apple', 'banana', 'cherry', 'grapes', 'kiwi', 'mango', 'melon',
+  'orange', 'pear', 'pineapple', 'pomegranate', 'strawberry', 'watermelon'
+];
+
+const VEHICLE_FILE_KEYS = [
+  'firetruck', 'delivery_truck', 'dump_truck', 'concrete_mixer',
+  'tanker_truck', 'tow_truck', 'garbage_truck', 'tractor', 'car_carrier', 'pickup_truck'
 ];
 
 if (typeof window !== 'undefined') {
@@ -16,7 +27,26 @@ if (typeof window !== 'undefined') {
     const img = new Image();
     img.src = `/animals/${key}.png`;
     img.onload = () => {
-      animalImagesCache[key] = img;
+      assetImagesCache[key] = img;
+      assetImagesCache[`/animals/${key}.png`] = img;
+    };
+  });
+
+  FRUIT_FILE_KEYS.forEach((key) => {
+    const img = new Image();
+    img.src = `/fruits/${key}.png`;
+    img.onload = () => {
+      assetImagesCache[key] = img;
+      assetImagesCache[`/fruits/${key}.png`] = img;
+    };
+  });
+
+  VEHICLE_FILE_KEYS.forEach((key) => {
+    const img = new Image();
+    img.src = `/vehicles/${key}.png`;
+    img.onload = () => {
+      assetImagesCache[key] = img;
+      assetImagesCache[`/vehicles/${key}.png`] = img;
     };
   });
 }
@@ -42,6 +72,12 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
   const nextBubbleIdRef = useRef<number>(1);
   const nextTextIdRef = useRef<number>(1);
   const popCountStreakRef = useRef<number>(0);
+
+  // Touch deduplication & gesture safety refs for mobile
+  const lastTouchTimeRef = useRef<number>(0);
+  const lastPopTimeRef = useRef<number>(0);
+  const lastEmptyBlowTimeRef = useRef<number>(0);
+  const touchTrackingRef = useRef<Map<number, { hasPopped: boolean; startX: number; startY: number }>>(new Map());
 
   // Spawner params based on speed - Enlarged bubbles for toddler fingers & mobile screens
   const getSpeedParams = useCallback(() => {
@@ -206,9 +242,9 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
     [onBubblePopped, onSurprisePopped]
   );
 
-  // Handle Multi-touch / Palm hit
-  const handleTouchAtCoords = useCallback(
-    (clientX: number, clientY: number) => {
+  // Process interaction at (clientX, clientY)
+  const processHit = useCallback(
+    (clientX: number, clientY: number, isMove = false, touchId?: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -224,16 +260,31 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
         if (b.popped) continue;
 
         const dist = Math.hypot(b.x - x, b.y - y);
-        // generous hit box for toddler (extra 20px padding)
+        // Generous hit box for toddler (extra 22px padding)
         if (dist <= b.radius + 22) {
           popBubble(b);
           hitAny = true;
-          // allow multi-popping if finger touches overlapping bubbles
+          lastPopTimeRef.current = Date.now();
+          if (touchId !== undefined) {
+            const tr = touchTrackingRef.current.get(touchId);
+            if (tr) tr.hasPopped = true;
+          }
         }
       }
 
-      // If toddler tapped empty space, blow small bubbles!
-      if (!hitAny) {
+      // If toddler intentionally tapped empty space (NOT during move/swipe, and did NOT just pop a bubble)
+      const now = Date.now();
+      const touchRecord = touchId !== undefined ? touchTrackingRef.current.get(touchId) : undefined;
+      const touchAlreadyPopped = touchRecord ? touchRecord.hasPopped : false;
+
+      if (
+        !hitAny &&
+        !isMove &&
+        !touchAlreadyPopped &&
+        now - lastPopTimeRef.current > 350 &&
+        now - lastEmptyBlowTimeRef.current > 350
+      ) {
+        lastEmptyBlowTimeRef.current = now;
         soundManager.playBubbleBlow();
         for (let k = 0; k < 3; k++) {
           const mini = createBubble(
@@ -249,25 +300,54 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
     [createBubble, popBubble]
   );
 
-  // Multi-touch Handler
+  // Multi-touch Handlers with Gesture Isolation
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault(); // prevent zoom and pull to refresh
-    for (let i = 0; i < e.touches.length; i++) {
-      const touch = e.touches[i];
-      handleTouchAtCoords(touch.clientX, touch.clientY);
+    lastTouchTimeRef.current = Date.now();
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      touchTrackingRef.current.set(touch.identifier, {
+        hasPopped: false,
+        startX: touch.clientX,
+        startY: touch.clientY,
+      });
+      processHit(touch.clientX, touch.clientY, false, touch.identifier);
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    for (let i = 0; i < e.touches.length; i++) {
-      const touch = e.touches[i];
-      handleTouchAtCoords(touch.clientX, touch.clientY);
+    lastTouchTimeRef.current = Date.now();
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      // Only pop existing bubbles on swipe/move, NEVER blow empty bubbles on move
+      processHit(touch.clientX, touch.clientY, true, touch.identifier);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    lastTouchTimeRef.current = Date.now();
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      touchTrackingRef.current.delete(e.changedTouches[i].identifier);
+    }
+  };
+
+  const handleTouchCancel = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      touchTrackingRef.current.delete(e.changedTouches[i].identifier);
     }
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    handleTouchAtCoords(e.clientX, e.clientY);
+    // Ignore synthetic mouse events generated by touch devices after touchstart/touchend
+    if (Date.now() - lastTouchTimeRef.current < 600) {
+      return;
+    }
+    processHit(e.clientX, e.clientY, false);
   };
 
   // Canvas Resize and Main Game Loop
@@ -388,7 +468,12 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
           ctx.scale(wobbleScale, wobbleScale);
 
           const itemKey = b.surprise.id === 'puppy' ? 'dog' : b.surprise.id === 'kitten' ? 'cat' : b.surprise.id === 'bunny' ? 'rabbit' : b.surprise.id;
-          const cachedImg = animalImagesCache[itemKey];
+          const cachedImg =
+            assetImagesCache[itemKey] ||
+            (b.surprise.imagePath ? assetImagesCache[b.surprise.imagePath] : undefined) ||
+            assetImagesCache[`/fruits/${itemKey}.png`] ||
+            assetImagesCache[`/vehicles/${itemKey}.png`] ||
+            assetImagesCache[`/animals/${itemKey}.png`];
 
           if (cachedImg && cachedImg.complete && cachedImg.naturalWidth > 0) {
             const imgSize = currentRadius * 1.45;
@@ -498,6 +583,8 @@ export const BubbleGameCanvas: React.FC<BubbleGameCanvasProps> = ({
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       className="absolute inset-0 w-full h-full cursor-pointer select-none touch-none"
     />
   );

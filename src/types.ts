@@ -11,9 +11,10 @@ export interface SurpriseItem {
   nameVi: string;
   nameEn?: string;
   emoji: string;
-  category: 'vehicle' | 'animal' | 'nature' | 'object';
+  category: 'vehicle' | 'animal' | 'fruit' | 'nature' | 'object';
   soundType: string;
   tagColor?: string;
+  imagePath?: string;
 }
 
 export interface Bubble {
@@ -95,5 +96,24 @@ export interface GameInfo {
 export interface BabyProfile {
   name: string;
   avatarEmoji: string;
+}
+
+export interface PeekabooAnimal {
+  id: string;
+  nameVi: string;
+  nameEn: string;
+  speechPhrase: string;
+  soundOnomatopoeia: string;
+  soundType: string;
+  imageSrc: string;
+  emoji: string;
+  colorTheme: {
+    bg: string;
+    border: string;
+    text: string;
+    badgeBg: string;
+  };
+  favoriteFood: string;
+  funFactVi: string;
 }
 

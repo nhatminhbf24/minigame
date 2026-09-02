@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BubbleGameCanvas } from './components/BubbleGameCanvas';
+import { FarmPeekabooGame } from './components/FarmPeekabooGame';
 import { GameHeader } from './components/GameHeader';
 import { RunningEntitiesLayer } from './components/RunningEntitiesLayer';
 import { ParentalModal } from './components/ParentalModal';
@@ -140,7 +141,17 @@ export default function App() {
     );
   }
 
-  // Active game viewport
+  // Active Game: Farm Peekaboo Game
+  if (activeGame.id === 'animal_peekaboo') {
+    return (
+      <FarmPeekabooGame
+        profile={profile}
+        onBackToLobby={handleBackToLobby}
+      />
+    );
+  }
+
+  // Active Game: Bubble Pop Game
   return (
     <main
       id="game-viewport"
