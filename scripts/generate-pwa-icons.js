@@ -1,0 +1,104 @@
+import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
+
+const svgContent = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#F472B6" />
+    </linearGradient>
+    <linearGradient id="bubbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.2" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1E1B4B" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle / circle -->
+  <rect width="512" height="512" rx="128" fill="url(#skyGrad)" />
+
+  <!-- Playful Decorative Bubbles -->
+  <circle cx="100" cy="120" r="32" fill="#FFFFFF" opacity="0.35" />
+  <circle cx="420" cy="140" r="44" fill="#FFFFFF" opacity="0.3" />
+  <circle cx="430" cy="380" r="28" fill="#FFFFFF" opacity="0.35" />
+  <circle cx="90" cy="390" r="36" fill="#FFFFFF" opacity="0.25" />
+
+  <!-- Center Giant Sparkling Bubble -->
+  <g filter="url(#shadow)">
+    <circle cx="256" cy="245" r="140" fill="url(#bubbleGrad)" stroke="#FFFFFF" stroke-width="8" />
+    <ellipse cx="215" cy="165" rx="35" ry="18" fill="#FFFFFF" opacity="0.75" transform="rotate(-30 215 165)" />
+    <circle cx="310" cy="295" r="12" fill="#FFFFFF" opacity="0.55" />
+  </g>
+
+  <!-- Cute Star / Sparkles Inside Bubble -->
+  <!-- Cute Fire Truck & Teddy / Star Icon Emoji representation -->
+  <text x="256" y="275" font-size="125" text-anchor="middle" dominant-baseline="central">🎈</text>
+
+  <!-- Happy Banner at Bottom -->
+  <g filter="url(#shadow)">
+    <rect x="86" y="395" width="340" height="70" rx="35" fill="#FFFFFF" />
+    <text x="256" y="440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#4F46E5" text-anchor="middle">NHẬT MINH</text>
+  </g>
+</svg>
+`;
+
+async function generateIcons() {
+  const publicDir = path.join(process.cwd(), 'public');
+  fs.writeFileSync(path.join(publicDir, 'icon.svg'), svgContent);
+
+  const svgBuffer = Buffer.from(svgContent);
+
+  // 192x192
+  await sharp(svgBuffer)
+    .resize(192, 192)
+    .png()
+    .toFile(path.join(publicDir, 'pwa-192x192.png'));
+
+  // 512x512
+  await sharp(svgBuffer)
+    .resize(512, 512)
+    .png()
+    .toFile(path.join(publicDir, 'pwa-512x512.png'));
+
+  // Maskable 512x512 (with safe zone padding)
+  const maskableSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+      <linearGradient id="skyGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#38BDF8" />
+        <stop offset="50%" stop-color="#818CF8" />
+        <stop offset="100%" stop-color="#F472B6" />
+      </linearGradient>
+    </defs>
+    <rect width="512" height="512" fill="url(#skyGrad2)" />
+    <g transform="translate(51, 51) scale(0.8)">
+      ${svgContent.replace(/<svg[^>]*>/, '').replace('</svg>', '')}
+    </g>
+  </svg>
+  `;
+  await sharp(Buffer.from(maskableSvg))
+    .resize(512, 512)
+    .png()
+    .toFile(path.join(publicDir, 'pwa-maskable-512x512.png'));
+
+  // Apple Touch Icon 180x180
+  await sharp(svgBuffer)
+    .resize(180, 180)
+    .png()
+    .toFile(path.join(publicDir, 'apple-touch-icon.png'));
+
+  // Favicon 64x64 png & ico
+  await sharp(svgBuffer)
+    .resize(64, 64)
+    .png()
+    .toFile(path.join(publicDir, 'favicon.png'));
+
+  console.log('All PWA Icons generated successfully!');
+}
+
+generateIcons().catch(console.error);

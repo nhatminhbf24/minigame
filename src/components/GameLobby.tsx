@@ -3,6 +3,7 @@ import { Sparkles, Play, Volume2, Star, Smile, ChevronRight, Lock } from 'lucide
 import { GameInfo, BabyProfile } from '../types';
 import { AVAILABLE_GAMES, AVATAR_OPTIONS } from '../data/gameData';
 import { soundManager } from '../utils/audio';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface GameLobbyProps {
   currentProfile: BabyProfile;
@@ -84,9 +85,14 @@ export const GameLobby: React.FC<GameLobbyProps> = ({
           </span>
           <span>🎉</span>
         </h1>
-        <p className="text-xs md:text-base text-slate-600 font-bold mt-1">
+        <p className="text-xs md:text-base text-slate-600 font-bold mt-1 mb-2">
           Chọn trò chơi vui nhộn & khám phá thế giới rực rỡ nhé!
         </p>
+
+        {/* PWA Install Button for easy 1-click home screen install */}
+        <div className="mt-1">
+          <PWAInstallButton />
+        </div>
       </header>
 
       {/* 2. Middle Content: Baby Profile Card + Game Selection */}

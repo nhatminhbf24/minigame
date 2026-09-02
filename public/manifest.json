@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "Thế Giới Của Bé Nhật Minh",
+  "short_name": "Bé Nhật Minh",
+  "description": "Web game mini tương tác giáo dục sớm rèn luyện phản xạ, ngôn ngữ và nhận thức cho bé Nhật Minh",
+  "theme_color": "#38bdf8",
+  "background_color": "#f0f9ff",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

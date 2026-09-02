@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Volume2, VolumeX, Mic, MicOff, Maximize, RefreshCw, X, ShieldCheck } from 'lucide-react';
 import { soundManager } from '../utils/audio';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface ParentalModalProps {
   isOpen: boolean;
@@ -151,6 +152,11 @@ export const ParentalModal: React.FC<ParentalModalProps> = ({
                 Nhiều bóng
               </button>
             </div>
+          </div>
+
+          {/* PWA App Install option */}
+          <div className="flex flex-col items-center justify-center p-2 rounded-2xl bg-indigo-50 border border-indigo-100">
+            <PWAInstallButton />
           </div>
 
           {/* Fullscreen & Reset */}
